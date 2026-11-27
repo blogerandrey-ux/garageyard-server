@@ -47,8 +47,7 @@ with tarfile.open(sys.argv[1], 'r:gz') as archive:
         if not (member.isfile() or member.isdir()) or not (root / member.name).resolve().is_relative_to(root):
             raise SystemExit(f'Недопустимый файл в архиве: {member.name}')
         archive.extract(member, root, set_attrs=False)
-        if member.isfile():
-            (root / member.name).chmod(0o755 if member.mode & 0o111 else 0o644)
+        (root / member.name).chmod(0o755 if member.isdir() or member.mode & 0o111 else 0o644)
 PY
     test -f "$stage/game/GarageYardServer.sh"
     test -d "$stage/game/GarageYard/Content/Paks"

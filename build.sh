@@ -7,9 +7,13 @@ mkdir -p "$output"/{archive,tmp}
 export TMPDIR="$output/tmp"
 bash "$UE_ROOT/Engine/Build/BatchFiles/RunUAT.sh" BuildCookRun -project="$project" \
   -noP4 -build -cook -server -noclient -serverplatform=Linux -serverconfig=Development \
-  -map=ConstructionSite+MotorDepot+ChemicalLab -stage -pak -archive -archivedirectory="$output/archive" -utf8output
-test -f "$output/archive/LinuxServer/GarageYardServer.sh"
-tar -C "$output/archive/LinuxServer" -hczf "$output/GarageYard-LinuxServer.tar.gz.tmp" .
+  -map=ConstructionSite+MotorDepot+ChemicalLab -nodebuginfo -stage -pak -archive -archivedirectory="$output/archive" -utf8output
+stage="$output/archive"
+if [[ -f "$stage/LinuxServer/GarageYardServer.sh" ]]; then stage="$stage/LinuxServer"; fi
+test -f "$stage/GarageYardServer.sh"
+test -d "$stage/GarageYard/Content/Paks"
+tar -C "$stage" --dereference --hard-dereference --exclude='*.debug' --exclude='*.sym' \
+  -czf "$output/GarageYard-LinuxServer.tar.gz.tmp" .
 mv "$output/GarageYard-LinuxServer.tar.gz.tmp" "$output/GarageYard-LinuxServer.tar.gz"
 (cd "$output" && sha256sum GarageYard-LinuxServer.tar.gz > SHA256SUMS)
 echo "$output/GarageYard-LinuxServer.tar.gz"
