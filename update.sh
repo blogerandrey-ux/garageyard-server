@@ -17,9 +17,10 @@ if [[ $current != "$old_hash" ]]; then echo 'Для этого обновлен�
 if ! command -v xdelta3 >/dev/null; then apt-get install -y xdelta3; fi
 stage=$(mktemp -d "$(dirname "$binary")/.update-XXXXXXXX")
 trap 'rm -rf -- "$stage"' EXIT
-curl --fail --location --retry 3 --output "$stage/$patch" "$release/$patch"
-[[ $(digest "$stage/$patch") == "$patch_hash" ]] || { echo 'Ошибка SHA-256 обновления.' >&2; exit 1; }
-xdelta3 -d -s "$binary" "$stage/$patch" "$stage/new"
+source "$(dirname -- "$0")/download.sh"
+cache="$(dirname -- "$game")/.downloads-0/$patch_hash"
+download_asset "$release/$patch" "$cache/$patch" "$patch_hash"
+xdelta3 -d -s "$binary" "$cache/$patch" "$stage/new"
 [[ $(digest "$stage/new") == "$new_hash" ]] || { echo 'Ошибка SHA-256 готового сервера.' >&2; exit 1; }
 chmod 755 "$stage/new"
 ln "$binary" "$stage/previous"
@@ -31,4 +32,6 @@ if "$running" && ! systemctl restart garageyard; then
     systemctl restart garageyard
     exit 1
 fi
+rm -- "$cache/$patch"
+rmdir -- "$cache"
 echo 'GarageYard 1.0.2 установлен.'

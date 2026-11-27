@@ -21,22 +21,25 @@ game) ;;
 esac
 [[ $(uname -m) == x86_64 ]] || { echo 'Нужен Linux x86-64.' >&2; exit 1; }
 dest=$(realpath -m "${GARAGEYARD_HOME:-/srv/garageyard}")
+if [[ ! -d $dest ]]; then "${root[@]}" install -d -m755 "$dest"; fi
+exec 8<"$dest"
+flock -n 8 || { echo 'Установка в этом каталоге уже выполняется.' >&2; exit 1; }
 if [[ ! -f "$dest/game/GarageYardServer.sh" ]]; then
-    "${root[@]}" install -d -m755 "$dest"
     stage=$("${root[@]}" mktemp -d "$dest/.install-XXXXXXXX")
     trap '"${root[@]}" rm -rf -- "$stage"' EXIT
     "${root[@]}" chown "$(id -u):$(id -g)" "$stage"
     archive=${GARAGEYARD_ARCHIVE:-}
     if [[ -z $archive ]]; then
-        for file in SHA256SUMS GarageYard-LinuxServer.tar.gz; do
-            if ! curl --fail --location --silent --show-error --retry 3 \
-                "https://github.com/$repo/releases/latest/download/$file" --output "$stage/$file"; then
-                echo "Не удалось скачать $file из релиза. Можно указать локальный GARAGEYARD_ARCHIVE." >&2
-                exit 1
-            fi
-        done
-        archive="$stage/GarageYard-LinuxServer.tar.gz"
-        (cd "$stage" && sha256sum -c --strict SHA256SUMS)
+        source "$src/download.sh"
+        release="https://github.com/$repo/releases/latest/download"
+        name=GarageYard-LinuxServer.tar.gz
+        curl --fail --location --silent --show-error --retry 3 "$release/SHA256SUMS" -o "$stage/SHA256SUMS"
+        hash=$(awk -v name="$name" 'NF == 2 && ($2 == name || $2 == "*" name) {print $1}' "$stage/SHA256SUMS")
+        [[ $hash =~ ^[a-f0-9]{64}$ ]] || { echo "В SHA256SUMS нет однозначной суммы для $name." >&2; exit 1; }
+        cache="$dest/.downloads-$(id -u)"
+        "${root[@]}" install -d -m700 -o "$(id -u)" -g "$(id -g)" "$cache"
+        archive="$cache/$hash/$name"
+        download_asset "$release/$name" "$archive" "$hash"
     fi
     mkdir "$stage/game"
     python3 - "$archive" "$stage/game" <<'PY'
@@ -52,7 +55,9 @@ PY
     test -f "$stage/game/GarageYardServer.sh"
     test -d "$stage/game/GarageYard/Content/Paks"
     "${root[@]}" mv -T "$stage/game" "$dest/game"
+    if [[ -z ${GARAGEYARD_ARCHIVE:-} ]]; then rm -- "$archive"; rmdir -- "$cache/$hash"; fi
 fi
+exec 8<&-
 if ! getent passwd garageyard >/dev/null; then
     "${root[@]}" useradd --system --user-group --home-dir /var/lib/garageyard --shell /usr/sbin/nologin garageyard
 fi
