@@ -4,10 +4,10 @@
 
 ## Установка
 
-Для Linux x86-64 с systemd, Python 3.9+, Bash и GitHub CLI. Выполните `gh auth login` под аккаунтом с доступом к этому приватному репозиторию. Из родительского каталога выполните одну команду.
+Для Ubuntu 24.04 x86-64 с systemd, Python 3, Bash, Git и curl. Установщик загружает сервер из публичного релиза GitHub. Из родительского каталога выполните одну команду.
 
 ```bash
-gh repo clone blogerandrey-ux/garageyard-server && bash garageyard-server/install.sh
+git clone --depth 1 https://github.com/blogerandrey-ux/garageyard-server.git && bash garageyard-server/install.sh
 ```
 
 Для первой установки нужен релиз с файлами `GarageYard-LinuxServer.tar.gz` и `SHA256SUMS`. Если архива в релизах ещё нет, см. раздел «Сборка». При наличии своего архива задайте `GARAGEYARD_ARCHIVE=/путь/к/GarageYard-LinuxServer.tar.gz`. Серверные данные устанавливаются в `/srv/garageyard`. Чтобы выбрать другой диск, передайте `GARAGEYARD_HOME=/путь/к/данным`. Каталог должен быть доступен на чтение и проход системному пользователю `garageyard`. Скачивание и распаковка происходят на выбранном диске.

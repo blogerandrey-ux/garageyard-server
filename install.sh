@@ -28,10 +28,13 @@ if [[ ! -f "$dest/game/GarageYardServer.sh" ]]; then
     "${root[@]}" chown "$(id -u):$(id -g)" "$stage"
     archive=${GARAGEYARD_ARCHIVE:-}
     if [[ -z $archive ]]; then
-        if ! gh release download --repo "$repo" --pattern GarageYard-LinuxServer.tar.gz --pattern SHA256SUMS --dir "$stage"; then
-            echo 'Нужен релиз LinuxServer с архивом и SHA256SUMS либо локальный GARAGEYARD_ARCHIVE.' >&2
-            exit 1
-        fi
+        for file in SHA256SUMS GarageYard-LinuxServer.tar.gz; do
+            if ! curl --fail --location --silent --show-error --retry 3 \
+                "https://github.com/$repo/releases/latest/download/$file" --output "$stage/$file"; then
+                echo "Не удалось скачать $file из релиза. Можно указать локальный GARAGEYARD_ARCHIVE." >&2
+                exit 1
+            fi
+        done
         archive="$stage/GarageYard-LinuxServer.tar.gz"
         (cd "$stage" && sha256sum -c --strict SHA256SUMS)
     fi
