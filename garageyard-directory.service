@@ -1,0 +1,12 @@
+[Unit]
+Description=GarageYard game server directory
+After=network.target
+
+[Service]
+DynamicUser=yes
+ExecStart=/usr/bin/python3 /usr/local/lib/garageyard/directory.py
+Restart=on-failure
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

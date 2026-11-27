@@ -1,0 +1,17 @@
+[Unit]
+Description=GarageYard dedicated game server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=garageyard
+Group=garageyard
+StateDirectory=garageyard
+WorkingDirectory=/var/lib/garageyard
+ExecStart=/usr/local/bin/garageyard run
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
