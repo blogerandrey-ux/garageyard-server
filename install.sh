@@ -54,6 +54,7 @@ with tarfile.open(sys.argv[1], 'r:gz') as archive:
 PY
     test -f "$stage/game/GarageYardServer.sh"
     test -d "$stage/game/GarageYard/Content/Paks"
+    if [[ -z ${GARAGEYARD_ARCHIVE:-} ]]; then printf '%s\n' "$hash" > "$stage/game/.release-sha256"; fi
     "${root[@]}" mv -T "$stage/game" "$dest/game"
     if [[ -z ${GARAGEYARD_ARCHIVE:-} ]]; then rm -- "$archive"; rmdir -- "$cache/$hash"; fi
 fi
